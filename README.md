@@ -1,3 +1,5 @@
+[Ver el video de funcionamiento aquí](https://www.canva.com/design/DAGWzliJwSA/m_FdMVfgiOaKfPgULj7OHQ/watch?utm_content=DAGWzliJwSA&utm_campaign=designshare&utm_medium=link&utm_source=editor)  
+
 🌌 Sistema Solar Simulado
 Este proyecto es una simulación interactiva de un sistema solar creado en Rust, utilizando un framebuffer personalizado para renderizar gráficos. Incluye planetas, órbitas, una nave espacial y un skybox lleno de estrellas que se mueven en el fondo.
 
