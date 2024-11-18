@@ -32,6 +32,10 @@ impl Camera {
     rotated.normalize()
   }
 
+  pub fn forward(&self) -> Vec3 {
+    (self.center - self.eye).normalize()
+  }
+
   pub fn orbit(&mut self, delta_yaw: f32, delta_pitch: f32) {
     let radius_vector = self.eye - self.center;
     let radius = radius_vector.magnitude();

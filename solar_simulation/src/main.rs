@@ -122,6 +122,41 @@ pub fn generate_skybox_stars(num_stars: usize, framebuffer_width: usize, framebu
     stars
 }
 
+pub fn render_nave(
+    framebuffer: &mut Framebuffer,
+    camera: &Camera,
+    vertex_array: &[Vertex],
+    time: i32,
+) {
+    let nave_translation: Vec3 = camera.eye + camera.forward() * 5.0 + Vec3::new(-0.9, -0.9, 0.0);
+    let nave_scale = 0.1; // Tamaño de la nave
+    let nave_model_matrix = create_model_matrix(
+        nave_translation,
+        nave_scale,
+        Vec3::new(0.0, 1.57, 0.0) // Rotación de 90 grados en el eje Y
+
+    );
+    
+
+    let nave_uniforms = Uniforms {
+        model_matrix: nave_model_matrix,
+        view_matrix: look_at(&camera.eye, &camera.center, &camera.up),
+        projection_matrix: perspective(
+            45.0 * std::f32::consts::PI / 180.0,
+            framebuffer.width as f32 / framebuffer.height as f32,
+            0.1,
+            1000.0,
+        ),
+        viewport_matrix: Mat4::identity(),
+        time: time as u32,
+        noise: create_noise(),
+    };
+
+    render_celestial_body(framebuffer, vertex_array, &nave_uniforms, moon_shader);
+}
+
+
+
 pub fn render_skybox(framebuffer: &mut Framebuffer, stars: &Vec<(usize, usize)>, color: u32) {
     framebuffer.set_current_color(color); // Establecer el color para las estrellas
 
@@ -348,6 +383,11 @@ fn main() {
     let obj = Obj::load("assets/sphere-1.obj").expect("Failed to load obj");
     let vertex_arrays = obj.get_vertex_array();
 
+    let nave_obj = Obj::load("assets/nave.obj").expect("Failed to load nave.obj");
+    let nave_vertex_arrays = nave_obj.get_vertex_array();
+
+
+
     let mut time = 0.0;
     // Configuración de las órbitas
     let planet_orbits = vec![50.0, 100.0, 150.0, 200.0, 250.0]; // Radios de las órbitas
@@ -406,12 +446,14 @@ fn main() {
         }
        
         render_skybox(&mut framebuffer, &stars, 0xFFD966); // Dibujar las estrellas
+        
 
         // Actualizar y renderizar planetas
         for planet in &mut planets {
             planet.update_position(time);
             planet.render(&mut framebuffer, &vertex_arrays, &mut uniforms, time);
         }
+        render_nave(&mut framebuffer, &camera, &nave_vertex_arrays, time as i32);
         
         
         window
