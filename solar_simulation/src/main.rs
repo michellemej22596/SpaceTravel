@@ -317,6 +317,13 @@ fn main() {
     let vertex_arrays = obj.get_vertex_array();
 
     let mut time = 0.0;
+    // Configuración de las órbitas
+    let planet_orbits = vec![50.0, 100.0, 150.0, 200.0, 250.0]; // Radios de las órbitas
+    let orbit_color = 0x353535; // Color blanco para las órbitas
+
+    // Posiciones iniciales y velocidades angulares para los planetas
+    let mut planet_angles: Vec<f32> = vec![0.0; planet_orbits.len()]; // Ángulos iniciales
+    let angular_speeds: Vec<f32> = vec![0.01, 0.008, 0.006, 0.004, 0.002]; // Velocidades angulares
 
     // Bucle principal
     while window.is_open() {
@@ -353,18 +360,21 @@ fn main() {
             time: time as u32,
             noise,
         };
+       
 
-        // Renderizar órbitas
-        for planet in &planets {
-            if planet.orbit_radius > 0.0 {
-                render_orbit(
-                    &mut framebuffer,
-                    planet.orbit_radius,
-                    Vec3::new(0.0, 0.0, 0.0),
-                );
-            }
+        
+        // Dibuja las órbitas de los planetas
+        for &orbit_radius in &planet_orbits {
+            render_orbit(
+                &mut framebuffer,
+                orbit_radius,               // Radio de la órbita
+                Vec3::new(0.0, 0.0, 0.0),   // Centro del sistema solar
+                orbit_color,                // Color de la órbita
+            );
         }
 
+        
+    
         // Actualizar y renderizar planetas
         for planet in &mut planets {
             planet.update_position(time);

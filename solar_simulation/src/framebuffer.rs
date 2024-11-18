@@ -35,34 +35,34 @@ impl Framebuffer {
     }
 
     pub fn draw_line(&mut self, x1: usize, y1: usize, x2: usize, y2: usize, color: u32) {
-        let dx = (x2 as isize - x1 as isize).abs() as usize;
-        let dy = (y2 as isize - y1 as isize).abs() as usize;
+        let dx = (x2 as isize - x1 as isize).abs();
+        let dy = (y2 as isize - y1 as isize).abs();
         let sx = if x1 < x2 { 1 } else { -1 };
         let sy = if y1 < y2 { 1 } else { -1 };
 
-        let mut err = if dx > dy { dx as isize } else { -(dy as isize) } / 2;
-        let mut current_x = x1 as isize;
-        let mut current_y = y1 as isize;
+        let mut err = dx - dy;
+
+        let mut x = x1 as isize;
+        let mut y = y1 as isize;
 
         loop {
-            // Dibuja el punto actual
-            if current_x >= 0 && current_x < self.width as isize && current_y >= 0 && current_y < self.height as isize {
-                self.buffer[current_y as usize * self.width + current_x as usize] = color;
+            if x >= 0 && x < self.width as isize && y >= 0 && y < self.height as isize {
+                let index = y as usize * self.width + x as usize;
+                self.buffer[index] = color;
             }
 
-            // Salir si alcanzamos el punto final
-            if current_x == x2 as isize && current_y == y2 as isize {
+            if x == x2 as isize && y == y2 as isize {
                 break;
             }
 
-            let e2 = err;
-            if e2 > -(dx as isize) {
-                err -= dy as isize;
-                current_x += sx as isize;
+            let e2 = 2 * err;
+            if e2 > -dy {
+                err -= dy;
+                x += sx;
             }
-            if e2 < (dy as isize) {
-                err += dx as isize;
-                current_y += sy as isize;
+            if e2 < dx {
+                err += dx;
+                y += sy;
             }
         }
     }
