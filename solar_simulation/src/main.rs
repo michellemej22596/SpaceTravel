@@ -372,8 +372,6 @@ fn main() {
 
         framebuffer.clear();
 
-        render_skybox(&mut framebuffer, &stars, 0xFFFFFF); // Dibujar las estrellas
-
         let view_matrix = look_at(&camera.eye, &camera.center, &camera.up);
         let projection_matrix = perspective(
             45.0 * PI / 180.0,
@@ -399,8 +397,7 @@ fn main() {
             time: time as u32,
             noise,
         };
-       
-        
+
         // Dibuja las órbitas de los planetas
         for &orbit_radius in &planet_orbits {
             render_orbit(
@@ -410,15 +407,16 @@ fn main() {
                 orbit_color,                // Color de la órbita
             );
         }
+       
+        render_skybox(&mut framebuffer, &stars, 0xFFD966); // Dibujar las estrellas
 
-        
-    
         // Actualizar y renderizar planetas
         for planet in &mut planets {
             planet.update_position(time);
             planet.render(&mut framebuffer, &vertex_arrays, &mut uniforms, time);
         }
-
+        
+        
         window
             .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
             .unwrap();
