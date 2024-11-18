@@ -14,6 +14,11 @@ mod fragment;
 mod shaders;
 mod camera;
 
+mod planet;
+mod orbit;
+use planet::Planet;
+use orbit::render_orbit;
+
 use framebuffer::Framebuffer;
 use vertex::Vertex;
 use obj::Obj;
@@ -239,7 +244,7 @@ fn main() {
 
     let mut framebuffer = Framebuffer::new(framebuffer_width, framebuffer_height);
     let mut window = Window::new(
-        "Animated Fragment Shader",
+        "Sistema Solar Simulado",
         window_width,
         window_height,
         WindowOptions::default(),
@@ -250,81 +255,131 @@ fn main() {
 
     framebuffer.set_background_color(0x060611);
 
-    // Inicializar cámara y modelo
-    let translation = Vec3::new(0.0, 0.0, 0.0);
-    let rotation = Vec3::new(0.0, 0.0, 0.0);
-    let scale = 0.1f32;
-
+    // Inicializar cámara
     let mut camera = Camera::new(
-        Vec3::new(0.0, 0.0, 5.0), // Posición de la cámara
+        Vec3::new(0.0, 0.0, 10.0), // Posición inicial de la cámara
         Vec3::new(0.0, 0.0, 0.0), // Centro de atención
-        Vec3::new(0.0, -1.0, 0.0) // Invirtiendo el eje 'y' del 'up' puede solucionar la inversión
+        Vec3::new(0.0, 1.0, 0.0), // Dirección 'up'
     );
 
-    let obj = Obj::load("assets/sphere-1.obj").expect("Failed to load obj"); // Usa una esfera base
-    //let obj = Obj::load("assets/nave.obj").expect("Failed to load obj"); // Usa la nave de base
+    // Crear planetas
+    let mut planets = vec![
+        Planet {
+            name: "Sol".to_string(),
+            radius: 1.0,
+            orbit_radius: 0.0, // El Sol no orbita
+            orbit_speed: 0.0,
+            rotation_speed: 0.01,
+            position: Vec3::new(0.0, 0.0, 0.0),
+            shader: star_shader,
+        },
+        Planet {
+            name: "Mercurio".to_string(),
+            radius: 0.2,
+            orbit_radius: 2.0,
+            orbit_speed: 1.5,
+            rotation_speed: 0.1,
+            position: Vec3::new(0.0, 0.0, 0.0),
+            shader: rocky_planet_shader,
+        },
+        Planet {
+            name: "Venus".to_string(),
+            radius: 0.3,
+            orbit_radius: 3.0,
+            orbit_speed: 1.2,
+            rotation_speed: 0.08,
+            position: Vec3::new(0.0, 0.0, 0.0),
+            shader: rocky_planet_shader,
+        },
+        Planet {
+            name: "Tierra".to_string(),
+            radius: 0.4,
+            orbit_radius: 4.0,
+            orbit_speed: 1.0,
+            rotation_speed: 0.1,
+            position: Vec3::new(0.0, 0.0, 0.0),
+            shader: earth_shader,
+        },
+        Planet {
+            name: "Marte".to_string(),
+            radius: 0.3,
+            orbit_radius: 5.0,
+            orbit_speed: 0.8,
+            rotation_speed: 0.09,
+            position: Vec3::new(0.0, 0.0, 0.0),
+            shader: rocky_planet_shader,
+        },
+        // Agregar más planetas si es necesario
+    ];
 
+    // Vertex array de una esfera (modelo básico para todos los planetas)
+    let obj = Obj::load("assets/sphere-1.obj").expect("Failed to load obj");
     let vertex_arrays = obj.get_vertex_array();
-    let mut time = 0;
 
+    let mut time = 0.0;
+
+    // Bucle principal
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
             break;
         }
 
-        time += 1;
-
         handle_input(&window, &mut camera);
 
         framebuffer.clear();
 
-        let noise = create_noise();
-
-        let model_matrix = create_model_matrix(translation, scale, rotation);
         let view_matrix = look_at(&camera.eye, &camera.center, &camera.up);
-        let projection_matrix = perspective(45.0 * PI / 180.0, window_width as f32 / window_height as f32, 0.1, 1000.0);
+        let projection_matrix = perspective(
+            45.0 * PI / 180.0,
+            window_width as f32 / window_height as f32,
+            0.1,
+            1000.0,
+        );
         let viewport_matrix = Mat4::new(
             framebuffer_width as f32 / 2.0, 0.0, 0.0, framebuffer_width as f32 / 2.0,
             0.0, framebuffer_height as f32 / 2.0, 0.0, framebuffer_height as f32 / 2.0,
             0.0, 0.0, 1.0, 0.0,
-            0.0, 0.0, 0.0, 1.0
+            0.0, 0.0, 0.0, 1.0,
         );
 
-        let uniforms = Uniforms {
-            model_matrix,
+        let noise = create_noise();
+
+        // Uniforms comunes
+        let mut uniforms = Uniforms {
+            model_matrix: Mat4::identity(),
             view_matrix,
             projection_matrix,
             viewport_matrix,
-            time,
-            noise
+            time: time as u32,
+            noise,
         };
 
-        // Selección de planetas con teclas
-        if window.is_key_down(Key::Z) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, star_shader); // Renderiza la estrella (Sol)
-        }else if window.is_key_down(Key::R) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, rocky_planet_shader); // Planeta rocoso
-        } else if window.is_key_down(Key::G) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, gas_giant_shader); // Gigante gaseoso
-        } else if window.is_key_down(Key::X) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, earth_shader); // Tierra
-        } else if window.is_key_down(Key::N) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, fragment_shader); // Nave espacial
-        } else if window.is_key_down(Key::M) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, moon_shader); // Luna o satélite
-        }else if window.is_key_down(Key::B) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, meteor_shader); // metoerito
-        }else if window.is_key_down(Key::V) {
-            render_celestial_body(&mut framebuffer, &vertex_arrays, &uniforms, ringed_planet_shader); // Plante con anillo
+        // Renderizar órbitas
+        for planet in &planets {
+            if planet.orbit_radius > 0.0 {
+                render_orbit(
+                    &mut framebuffer,
+                    planet.orbit_radius,
+                    Vec3::new(0.0, 0.0, 0.0),
+                );
+            }
         }
 
-        // Aplica el postprocesamiento después de renderizar los objetos
-    apply_emissive_postprocess(&mut framebuffer);
+        // Actualizar y renderizar planetas
+        for planet in &mut planets {
+            planet.update_position(time);
+            planet.render(&mut framebuffer, &vertex_arrays, &mut uniforms, time);
+        }
 
-        window.update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height).unwrap();
+        window
+            .update_with_buffer(&framebuffer.buffer, framebuffer_width, framebuffer_height)
+            .unwrap();
+
+        time += 0.016; // Incrementa el tiempo para animaciones
         std::thread::sleep(frame_delay);
     }
 }
+
 
 
 
