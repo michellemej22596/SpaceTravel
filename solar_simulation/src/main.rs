@@ -107,6 +107,38 @@ fn create_viewport_matrix(width: f32, height: f32) -> Mat4 {
     )
 }
 
+use rand::Rng; // Necesitarás la crate `rand`
+
+pub fn generate_skybox_stars(num_stars: usize, framebuffer_width: usize, framebuffer_height: usize) -> Vec<(usize, usize)> {
+    let mut rng = rand::thread_rng();
+    let mut stars = Vec::new();
+
+    for _ in 0..num_stars {
+        let x = rng.gen_range(0..framebuffer_width);
+        let y = rng.gen_range(0..framebuffer_height);
+        stars.push((x, y));
+    }
+
+    stars
+}
+
+pub fn render_skybox(framebuffer: &mut Framebuffer, stars: &Vec<(usize, usize)>, color: u32) {
+    framebuffer.set_current_color(color); // Establecer el color para las estrellas
+
+    for &(x, y) in stars {
+        // Centro de la estrella
+        framebuffer.point(x, y, 0.0);
+
+        // Resplandor básico más pequeño
+        framebuffer.point(x + 1, y, 0.0); // Derecha
+        framebuffer.point(x - 1, y, 0.0); // Izquierda
+        framebuffer.point(x, y + 1, 0.0); // Abajo
+        framebuffer.point(x, y - 1, 0.0); // Arriba
+    }
+}
+
+
+
 fn render(framebuffer: &mut Framebuffer, uniforms: &Uniforms, vertex_array: &[Vertex]) {
     // Vertex Shader
     let mut transformed_vertices = Vec::with_capacity(vertex_array.len());
@@ -324,7 +356,12 @@ fn main() {
     // Posiciones iniciales y velocidades angulares para los planetas
     let mut planet_angles: Vec<f32> = vec![0.0; planet_orbits.len()]; // Ángulos iniciales
     let angular_speeds: Vec<f32> = vec![0.01, 0.008, 0.006, 0.004, 0.002]; // Velocidades angulares
-
+    let stars = generate_skybox_stars(100, framebuffer_width, framebuffer_height);
+    let stars = generate_skybox_stars(100, framebuffer_width, framebuffer_height);
+    for (x, y) in &stars {
+        println!("Estrella en: ({}, {})", x, y);
+    }
+    
     // Bucle principal
     while window.is_open() {
         if window.is_key_down(Key::Escape) {
@@ -334,6 +371,8 @@ fn main() {
         handle_input(&window, &mut camera);
 
         framebuffer.clear();
+
+        render_skybox(&mut framebuffer, &stars, 0xFFFFFF); // Dibujar las estrellas
 
         let view_matrix = look_at(&camera.eye, &camera.center, &camera.up);
         let projection_matrix = perspective(
@@ -361,7 +400,6 @@ fn main() {
             noise,
         };
        
-
         
         // Dibuja las órbitas de los planetas
         for &orbit_radius in &planet_orbits {
