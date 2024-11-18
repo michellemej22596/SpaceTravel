@@ -358,9 +358,6 @@ fn main() {
     let angular_speeds: Vec<f32> = vec![0.01, 0.008, 0.006, 0.004, 0.002]; // Velocidades angulares
     let stars = generate_skybox_stars(100, framebuffer_width, framebuffer_height);
     let stars = generate_skybox_stars(100, framebuffer_width, framebuffer_height);
-    for (x, y) in &stars {
-        println!("Estrella en: ({}, {})", x, y);
-    }
     
     // Bucle principal
     while window.is_open() {
