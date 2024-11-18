@@ -3,6 +3,7 @@ pub struct Framebuffer {
     pub height: usize,
     pub buffer: Vec<u32>,
     pub zbuffer: Vec<f32>,
+    pub current_color: u32,
 }
 
 impl Framebuffer {
@@ -12,6 +13,7 @@ impl Framebuffer {
             height,
             buffer: vec![0; width * height],
             zbuffer: vec![f32::INFINITY; width * height],
+            current_color: 0xFFFFFF, // Blanco por defecto
         }
     }
 
@@ -21,6 +23,20 @@ impl Framebuffer {
         }
         for depth in self.zbuffer.iter_mut() {
             *depth = f32::INFINITY;
+        }
+    }
+
+    pub fn set_current_color(&mut self, color: u32) {
+        self.current_color = color;
+    }
+
+    pub fn point(&mut self, x: usize, y: usize, depth: f32) {
+        if x < self.width && y < self.height {
+            let index = y * self.width + x;
+            if self.zbuffer[index] > depth {
+                self.buffer[index] = self.current_color;
+                self.zbuffer[index] = depth;
+            }
         }
     }
 }
